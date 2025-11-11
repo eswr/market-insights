@@ -6,4 +6,7 @@ npx wrangler d1 execute market-insights --local --command "SELECT COUNT(*) FROM 
 
 npx wrangler secret put ALPHAVANTAGE_KEY
 npx wrangler secret put FINNHUB_KEY
+
+npx wrangler deploy
+npx wrangler d1 migrations apply market-insights  --remote
 ```

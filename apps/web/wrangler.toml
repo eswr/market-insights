@@ -15,6 +15,7 @@ crons = ["*/15 * * * *"]
 [[kv_namespaces]]
 binding = "STATE"
 id = "47367d042d3d4741a464728ec78efd98"
+preview_id = "05959142026b4eec8619a98399bc2ce3"
 
 [[d1_databases]]
 binding = "market_insights"
