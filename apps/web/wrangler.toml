@@ -1,0 +1,9 @@
+name = "web"
+main = "build/index.js"
+compatibility_date = "2025-11-11"
+
+[build]
+command = "cargo leptos build --release && cargo install -q worker-build && LEPTOS_OUTPUT_NAME=web worker-build --release --features ssr"
+
+[assets]
+directory = "./target/site"
