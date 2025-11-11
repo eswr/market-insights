@@ -1,5 +1,5 @@
 name = "web"
-main = "build/index.js"
+main = "build/worker/shim.mjs"
 compatibility_date = "2025-11-11"
 
 [build]
@@ -7,3 +7,16 @@ command = "cargo leptos build --release && cargo install -q worker-build && LEPT
 
 [assets]
 directory = "./target/site"
+
+# 🔔 Cron (optional)
+# [triggers]
+# crons = ["*/15 * * * *"]
+
+[[kv_namespaces]]
+binding = "STATE"
+id = "47367d042d3d4741a464728ec78efd98"
+
+[[d1_databases]]
+binding = "market_insights"
+database_name = "market-insights"
+database_id = "5470ceac-2c76-46d1-8aee-d4a4b9868e01"
