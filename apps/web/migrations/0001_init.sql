@@ -1,0 +1,31 @@
+CREATE TABLE IF NOT EXISTS symbols(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ticker TEXT UNIQUE NOT NULL,
+  tf TEXT NOT NULL DEFAULT '1h',
+  active INTEGER NOT NULL DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS alerts(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ts INTEGER NOT NULL,
+  ticker TEXT NOT NULL,
+  rule TEXT NOT NULL,
+  severity TEXT NOT NULL,
+  details TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_alerts_ticker_ts ON alerts(ticker, ts DESC);
+
+CREATE TABLE IF NOT EXISTS ohlcv(
+  ts INTEGER NOT NULL,
+  ticker TEXT NOT NULL,
+  tf TEXT NOT NULL,
+  open REAL NOT NULL,
+  high REAL NOT NULL,
+  low REAL NOT NULL,
+  close REAL NOT NULL,
+  volume REAL NOT NULL,
+  PRIMARY KEY (ticker, tf, ts)
+);
+
+CREATE INDEX IF NOT EXISTS idx_ohlcv_ticker_tf_ts ON ohlcv(ticker, tf, ts DESC);
