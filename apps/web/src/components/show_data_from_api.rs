@@ -8,22 +8,20 @@ use leptos::context::use_context;
 #[cfg(feature = "ssr")]
 use once_cell::sync::OnceCell;
 #[cfg(feature = "ssr")]
+use serde::{Deserialize, Serialize};
+#[cfg(feature = "ssr")]
 use serde_json::{json, Value};
 #[cfg(feature = "ssr")]
 use std::sync::Arc;
 #[cfg(feature = "ssr")]
-use std::time::{SystemTime, UNIX_EPOCH};
-#[cfg(feature = "ssr")]
 use worker::{
-    console_log, send::SendFuture, Env, Error as WorkerError, Fetch, Result as WorkerResult, Url,
+    console_log, send::SendFuture, Date, Env, Error as WorkerError, Fetch, Result as WorkerResult,
+    Url,
 };
 
 #[cfg(feature = "ssr")]
 fn now_secs() -> u64 {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map(|dur| dur.as_secs())
-        .unwrap_or_default()
+    Date::now().as_millis() / 1000
 }
 
 #[cfg(feature = "ssr")]
@@ -456,7 +454,7 @@ async fn build_market_data(env: &Env) -> WorkerResult<()> {
 }
 
 #[cfg(feature = "ssr")]
-async fn set_cooldown_internal(env: &Env, key: &str, minutes: u64) -> WorkerResult<()> {
+pub(crate) async fn set_cooldown_internal(env: &Env, key: &str, minutes: u64) -> WorkerResult<()> {
     let kv = env.kv("STATE")?;
     let until = now_secs().saturating_add(minutes.saturating_mul(60));
     let cooldown_key = format!("cooldown:{key}");
@@ -467,7 +465,7 @@ async fn set_cooldown_internal(env: &Env, key: &str, minutes: u64) -> WorkerResu
 }
 
 #[cfg(feature = "ssr")]
-async fn is_cooling_internal(env: &Env, key: &str) -> WorkerResult<bool> {
+pub(crate) async fn is_cooling_internal(env: &Env, key: &str) -> WorkerResult<bool> {
     let kv = env.kv("STATE")?;
     let cooldown_key = format!("cooldown:{key}");
     if let Some(txt) = kv.get(cooldown_key.as_str()).text().await? {
@@ -478,7 +476,7 @@ async fn is_cooling_internal(env: &Env, key: &str) -> WorkerResult<bool> {
 }
 
 #[cfg(feature = "ssr")]
-async fn insert_alert_internal(
+pub(crate) async fn insert_alert_internal(
     env: &Env,
     ticker: &str,
     rule: &str,
@@ -490,8 +488,9 @@ async fn insert_alert_internal(
     let stmt = db.prepare(
         "INSERT INTO alerts (ts, ticker, rule, severity, details) VALUES (?1, ?2, ?3, ?4, ?5)",
     );
+    let ts_js = (ts as f64).into();
     stmt.bind(&[
-        ts.into(),
+        ts_js,
         ticker.into(),
         rule.into(),
         severity.into(),
@@ -503,17 +502,24 @@ async fn insert_alert_internal(
 }
 
 #[cfg(feature = "ssr")]
-async fn list_alerts_internal(
-    env: &Env,
-    limit: i64,
-) -> WorkerResult<Vec<(i64, String, String, String, String)>> {
+#[derive(Clone, Serialize, Deserialize)]
+pub(crate) struct AlertRow {
+    ts: i64,
+    ticker: String,
+    rule: String,
+    severity: String,
+    details: String,
+}
+
+#[cfg(feature = "ssr")]
+pub(crate) async fn list_alerts_internal(env: &Env, limit: i64) -> WorkerResult<Vec<AlertRow>> {
     let db = env.d1("market_insights")?;
     let stmt = db.prepare(
         "SELECT ts, ticker, rule, severity, details FROM alerts ORDER BY ts DESC LIMIT ?1",
     );
     let limit_js = (limit as f64).into();
     let res = stmt.bind(&[limit_js])?.all().await?;
-    Ok(res.results::<(i64, String, String, String, String)>()?)
+    Ok(res.results::<AlertRow>()?)
 }
 
 #[server(SayHello)]
@@ -608,6 +614,11 @@ pub async fn list_alerts(
             list_alerts_internal(&env, limit)
                 .await
                 .map_err(|e| ServerFnError::new(e.to_string()))
+                .map(|rows| {
+                    rows.into_iter()
+                        .map(|row| (row.ts, row.ticker, row.rule, row.severity, row.details))
+                        .collect()
+                })
         })
         .await;
     }

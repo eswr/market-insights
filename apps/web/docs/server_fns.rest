@@ -1,0 +1,74 @@
+@base = http://localhost:8787
+@api = {{base}}/api
+@salt = 8233790636323071110
+
+// replace `@salt` with the suffix you see logged when you run the Worker (`[wrangler:info] /api/...<suffix>`).
+
+### Health: say_hello (example)
+POST {{api}}/say_hello{{salt}}
+Content-Type: application/x-www-form-urlencoded
+
+num=123
+
+### SetCooldown (POST)
+# Body format below matches Leptos default (x-www-form-urlencoded).
+# If you switched the server fn to PostJson, use the JSON variant further down.
+POST {{api}}/set_cooldown{{salt}}
+Content-Type: application/x-www-form-urlencoded
+
+key=BTCUSDT:donchian20&minutes=5
+
+### IsCooling (POST)
+POST {{api}}/is_cooling{{salt}}
+Content-Type: application/x-www-form-urlencoded
+
+key=BTCUSDT:donchian20
+
+### InsertAlert (POST)
+POST {{api}}/insert_alert{{salt}}
+Content-Type: application/x-www-form-urlencoded
+
+ticker=TEST&rule=rule_x&severity=info&details_json={"demo":true}
+
+### ListAlerts (POST)
+POST {{api}}/list_alerts{{salt}}
+Content-Type: application/x-www-form-urlencoded
+
+limit=20
+
+
+### SetCooldown (POST JSON)
+POST {{api}}/set_cooldown{{salt}}
+Content-Type: application/json
+
+{
+  "key": "BTCUSDT:donchian20",
+  "minutes": 5
+}
+
+### IsCooling (POST JSON)
+POST {{api}}/is_cooling{{salt}}
+Content-Type: application/json
+
+{
+  "key": "BTCUSDT:donchian20"
+}
+
+### InsertAlert (POST JSON)
+POST {{api}}/insert_alert{{salt}}
+Content-Type: application/json
+
+{
+  "ticker": "TEST",
+  "rule": "rule_x",
+  "severity": "info",
+  "details_json": "{\"demo\":true}"
+}
+
+### ListAlerts (POST JSON)
+POST {{api}}/list_alerts{{salt}}
+Content-Type: application/json
+
+{
+  "limit": 20
+}
